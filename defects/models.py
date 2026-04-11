@@ -8,7 +8,7 @@ import uuid
 
 # ==================== Product Model (Sprint 2) ====================
 class Product(models.Model):
-    product_id = models.CharField(max_length=50, verbose_name="Product ID")  
+    product_id = models.CharField(max_length=50, verbose_name="Product ID")   # 移除 unique=True
     version = models.CharField(max_length=20, verbose_name="Version")
 
     owner = models.ForeignKey(
@@ -18,7 +18,7 @@ class Product(models.Model):
         verbose_name="Product Owner"
     )
     developers = models.ManyToManyField(User, related_name='developed_products', blank=True)
-    
+    expiry_date = models.DateField(null=True, blank=True, verbose_name="Expiry Date")
     description = models.TextField(blank=True, verbose_name="Product Description")
     created_at = models.DateTimeField(auto_now_add=True)
 

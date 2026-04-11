@@ -11,10 +11,12 @@ class DefectAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['product_id', 'version', 'owner', 'description']
-    filter_horizontal = ['developers']
+    list_display = ['product_id', 'version', 'owner', 'expiry_date', 'description']
+    list_filter = ['owner', 'expiry_date']
     search_fields = ['product_id', 'version']
-    list_filter = ['owner']
+    filter_horizontal = ['developers']
+    fields = ['product_id', 'version', 'owner', 'developers', 'expiry_date', 'description']
+
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile

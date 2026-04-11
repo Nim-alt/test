@@ -23,6 +23,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'owner',
             'description',
             'developers',
+            'expiry_date',
             'created_at'
         ]
         read_only_fields = ['id', 'date_reported', 'date_fixed', 'tester_id']
@@ -79,7 +80,6 @@ class DefectSerializer(serializers.ModelSerializer):
         # ==================== Tester  ====================
         if user.groups.filter(name='Tester').exists():
             if method == 'POST':
-                # Tester 在提交時，只顯示允許填寫的欄位
                 fields_to_hide = ['version', 'status', 'severity', 'priority', 'date_fixed', 'assigned_to']
                 for field in fields_to_hide:
                     fields.pop(field, None)
