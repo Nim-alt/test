@@ -9,6 +9,7 @@ from rest_framework.decorators import action
 from .state_machine import is_transition_allowed, ROLE_OWNER, ROLE_DEVELOPER  
 from rest_framework.response import Response
 from rest_framework import status
+from django.utils import timezone
 from django_filters import rest_framework as filters
 
 # ====================== Defect API ======================
@@ -114,17 +115,36 @@ class DefectViewSet(viewsets.ModelViewSet):
                 )
 
         response = super().update(request, *args, **kwargs)
-
         instance.refresh_from_db()
+
+
+        if new_status == 'reopened' and old_status != 'reopened':
+            instance.assigned_to = None
+            instance.save(update_fields=['assigned_to'])
+            response.data = self.get_serializer(instance).data
+
+
+        if new_status == 'fixed':
+            instance.date_fixed = timezone.now()
+            instance.save(update_fields=['date_fixed'])
+            response.data = self.get_serializer(instance).data
+        elif new_status == 'reopened':
+            instance.date_fixed = None
+            instance.save(update_fields=['date_fixed'])
+            response.data = self.get_serializer(instance).data
+
+
 
         if new_status == 'assigned' and old_status != 'assigned':
             user = request.user
             role = self.get_user_role_for_defect(user, instance)
             if role == 'developer':  
-                instance.refresh_from_db()
                 instance.assigned_to = user
                 instance.save(update_fields=['assigned_to'])
                 response.data = self.get_serializer(instance).data
+
+        
+
 
         if new_comment_text:
             Comment.objects.create(
@@ -132,7 +152,6 @@ class DefectViewSet(viewsets.ModelViewSet):
                 author=request.user,
                 text=new_comment_text
             )
-            instance.refresh_from_db()
             serializer = self.get_serializer(instance)
             response.data = serializer.data
 
@@ -168,15 +187,15 @@ class DefectViewSet(viewsets.ModelViewSet):
 
         
     def perform_create(self, serializer):
-        tester_id_value = str(self.request.user.id)
-        serializer.save(tester_id=tester_id_value, tester_email=self.request.user.email)
         product = serializer.validated_data.get('product')
-rm -rf new        serializer.save(
+        version = product.version if product else ''
+        serializer.save(
             tester_id=str(self.request.user.id),
             tester_email=self.request.user.email,
             status='new',
             severity=None,
-            priority=None
+            priority=None,
+            version=version
         )
 
     @staticmethod
