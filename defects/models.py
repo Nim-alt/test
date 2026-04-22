@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save,pre_save
 from django.dispatch import receiver
 from django.core.mail import send_mail
 import uuid
@@ -73,50 +73,93 @@ class Defect(models.Model):
     class Meta:
         verbose_name = "Defect"
         verbose_name_plural = "Defects"
-
-
-# ==================== Email Notification ====================
-@receiver(post_save, sender=Defect)
-def send_defect_notification(sender, instance, created, **kwargs):
-
-    if not instance.tester_email:
-        return
-    recipients = [email.strip() for email in instance.tester_email.split(',') if email.strip()]
-    if not recipients:
-        return
-
-    if created:
-        subject = f"BetaTrax - Defect #{instance.id} created"
-        message = f"""
-Defect Title: {instance.title}
-Product: {instance.product.product_id} (v{instance.product.version})
-Description: {instance.description}
-Status: {instance.get_status_display()}
-        """
-    else:
-
+#Notifications
+@receiver(pre_save,sender=Defect)
+def capture_old_status(sender,instance,**kwargs):
+    if instance.pk:
         try:
-            old_instance = Defect.objects.get(pk=instance.pk)
-            old_status = old_instance.status
+            old_instance=Defect.objects.get(pk=instance.pk)
+            instance._old_status=old_instance.status
         except Defect.DoesNotExist:
-            return
-        if old_status == instance.status:
-            return  
-        subject = f"BetaTrax - Defect #{instance.id} status changed from {old_status} to {instance.get_status_display()}"
-        message = f"""
-Defect Title: {instance.title}
+            instance._old_status=None
+    else:
+        instance._old_status=None
+@receiver(post_save,sender=Defect)
+def send_status_change_notification(sender,instance,created,**kwargs):
+    # send an email notification when a status of existing defect changes.
+    if created:
+        return
+    if hasattr(instance, '_old_status') and instance._old_status is not None:
+        if instance._old_status !=instance.status:
+            if instance.tester_email:
+                recipients=[email.strip() for email in instance.tester_email.split(',') if email.strip()]
+                if recipients:
+                    old_status_display=dict(Defect.STATUS_CHOICES).get(instance._old_status,instance._old_status)
+                    new_status_display=instance.get_status_display()
+                    subject = f"BetaTrax - Defect #{instance.id} status changed from {old_status_display} to {new_status_display}"
+                    message = f"""
+Defect ID: #{instance.id}
+Title: {instance.title}
 Product: {instance.product.product_id} (v{instance.product.version})
 Description: {instance.description}
-New Status: {instance.get_status_display()}
-        """
 
-    send_mail(
-        subject=subject,
-        message=message,
-        from_email='betatrax@example.com',
-        recipient_list=recipients,
-        fail_silently=False,
-    )
+Status Update:
+  From: {old_status_display}
+  To:   {new_status_display}
+                    """
+                    try:
+                        send_mail(
+                            subject=subject,
+                            message=message,
+                            from_email='kayidax@gmail.com',
+                            recipient_list=recipients,
+                            fail_silently=False
+                        )
+                    except Exception as e:
+                        print(f"Failed to send status notification to email: {e}")
+
+# # ==================== Email Notification ====================
+# @receiver(post_save, sender=Defect)
+# def send_defect_notification(sender, instance, created, **kwargs):
+
+#     if not instance.tester_email:
+#         return
+#     recipients = [email.strip() for email in instance.tester_email.split(',') if email.strip()]
+#     if not recipients:
+#         return
+
+#     if created:
+#         subject = f"BetaTrax - Defect #{instance.id} created"
+#         message = f"""
+# Defect Title: {instance.title}
+# Product: {instance.product.product_id} (v{instance.product.version})
+# Description: {instance.description}
+# Status: {instance.get_status_display()}
+#         """
+#     else:
+
+#         try:
+#             old_instance = Defect.objects.get(pk=instance.pk)
+#             old_status = old_instance.status
+#         except Defect.DoesNotExist:
+#             return
+#         if old_status == instance.status:
+#             return  
+#         subject = f"BetaTrax - Defect #{instance.id} status changed from {old_status} to {instance.get_status_display()}"
+#         message = f"""
+# Defect Title: {instance.title}
+# Product: {instance.product.product_id} (v{instance.product.version})
+# Description: {instance.description}
+# New Status: {instance.get_status_display()}
+#         """
+
+#     send_mail(
+#         subject=subject,
+#         message=message,
+#         from_email='betatrax@example.com',
+#         recipient_list=recipients,
+#         fail_silently=False,
+#     )
 # ==================== comment function ====================
 class Comment(models.Model):
     defect = models.ForeignKey(Defect, on_delete=models.CASCADE, related_name='comments')

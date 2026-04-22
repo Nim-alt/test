@@ -2,3 +2,4 @@
 db.sqlite3rm -rf new
 __pycache__/
 new/
+.env
