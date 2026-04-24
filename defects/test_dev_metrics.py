@@ -97,31 +97,31 @@ class dev_metrics_test(TestCase):
                 rating = self.get_rating(fixed, reopened)
                 self.assertEqual(rating, "Poor")
     
-def test_boundary_values(self):
+    def test_boundary_values(self):
 
-    rating_below = self.get_rating(19, 0)
-    self.assertEqual(rating_below, "Insufficient data")
+        rating_below = self.get_rating(19, 0)
+        self.assertEqual(rating_below, "Insufficient data")
     
-    rating_at = self.get_rating(20, 0)
-    self.assertEqual(rating_at, "Good")
-    
-    rating_above = self.get_rating(21, 0)
-    self.assertEqual(rating_above, "Good")
-    
-    rating_below = self.get_rating(33, 1)
-    self.assertEqual(rating_below, "Good")
-    
-    rating_at = self.get_rating(32, 1)
-    self.assertEqual(rating_at, "Fair")
-    
-    rating_above = self.get_rating(31, 1)
-    self.assertEqual(rating_above, "Fair")
-    
-    rating_below = self.get_rating(41, 5)
-    self.assertEqual(rating_below, "Fair")
-    
-    rating_at = self.get_rating(32, 4)
-    self.assertEqual(rating_at, "Poor")
-    
-    rating_above = self.get_rating(31, 4)
-    self.assertEqual(rating_above, "Poor")
+        rating_at = self.get_rating(20, 0)
+        self.assertEqual(rating_at, "Good")
+        
+        rating_above = self.get_rating(21, 0)
+        self.assertEqual(rating_above, "Good")
+        
+        rating_below = self.get_rating(33, 1)
+        self.assertEqual(rating_below, "Good")
+        
+        rating_at = self.get_rating(32, 1)
+        self.assertEqual(rating_at, "Fair")
+        
+        rating_above = self.get_rating(31, 1)
+        self.assertEqual(rating_above, "Fair")
+        
+        rating_below = self.get_rating(41, 5)
+        self.assertEqual(rating_below, "Fair")
+        
+        rating_at = self.get_rating(32, 4)
+        self.assertEqual(rating_at, "Poor")
+        
+        rating_above = self.get_rating(31, 4)
+        self.assertEqual(rating_above, "Poor")
