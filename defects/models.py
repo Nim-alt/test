@@ -194,3 +194,13 @@ def save_user_profile(sender, instance, **kwargs):
         UserProfile.objects.create(user=instance, custom_user_id=uuid.uuid4().hex[:8].upper())
     else:
         instance.profile.save()
+
+
+# ==================== Defect History ====================
+class DefectHistory(models.Model):
+    defect = models.ForeignKey(Defect, on_delete=models.CASCADE, related_name='history')
+    old_status = models.CharField(max_length=20, blank=True, null=True)
+    new_status = models.CharField(max_length=20)
+    changed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='defect_history_changes')
+    changed_at = models.DateTimeField(auto_now_add=True)
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='defect_history_assigned')

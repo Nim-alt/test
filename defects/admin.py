@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
-from .models import Defect, Product,UserProfile
+from .models import Defect, Product
 
 @admin.register(Defect)
 class DefectAdmin(admin.ModelAdmin):
@@ -23,18 +23,12 @@ class ProductAdmin(admin.ModelAdmin):
     fields = ['product_id', 'version', 'owner', 'developers', 'expiry_date', 'description']
 
 
-class UserProfileInline(admin.StackedInline):
-    model = UserProfile
-    can_delete = False
-    verbose_name_plural = 'Profile'
-
 class CustomUserAdmin(UserAdmin):
-    inlines = [UserProfileInline]
-    list_display = ['username', 'email', 'get_custom_user_id']
-
-    def get_custom_user_id(self, obj):
-        return obj.profile.custom_user_id if hasattr(obj, 'profile') else None
-    get_custom_user_id.short_description = 'User ID'
+    list_display = ('get_user_id', 'username', 'email')
+    
+    def get_user_id(self, obj):
+        return obj.id
+    get_user_id.short_description = 'User ID' 
 
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)

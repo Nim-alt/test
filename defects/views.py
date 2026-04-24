@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
-from .models import Defect, Product, Comment
+from .models import Defect, Product, Comment, DefectHistory
 from .permissions import IsProductOwnerOrDeveloperForDefect
 from .serializers import DefectSerializer, ProductSerializer,CommentSerializer
 from rest_framework.decorators import action
@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from django_filters import rest_framework as filters
+
 
 # ====================== Defect API ======================
 class DefectViewSet(viewsets.ModelViewSet):
@@ -81,6 +82,16 @@ class DefectViewSet(viewsets.ModelViewSet):
             instance.status = 'duplicate'
             instance.save()
 
+            DefectHistory.objects.create(
+                defect=instance,
+                old_status=old_status,
+                new_status='duplicate',
+                changed_by=request.user,
+                assigned_to=instance.assigned_to 
+            )
+
+
+
             if new_comment_text:
                 Comment.objects.create(
                     defect=instance,
@@ -118,10 +129,15 @@ class DefectViewSet(viewsets.ModelViewSet):
         instance.refresh_from_db()
 
 
-        if new_status == 'reopened' and old_status != 'reopened':
-            instance.assigned_to = None
-            instance.save(update_fields=['assigned_to'])
-            response.data = self.get_serializer(instance).data
+
+        if new_status is not None and instance.status != old_status:
+            DefectHistory.objects.create(
+                defect=instance,
+                old_status=old_status,
+                new_status=instance.status,
+                changed_by=request.user,
+                assigned_to=instance.assigned_to  
+            )
 
 
         if new_status == 'fixed':
@@ -130,7 +146,8 @@ class DefectViewSet(viewsets.ModelViewSet):
             response.data = self.get_serializer(instance).data
         elif new_status == 'reopened':
             instance.date_fixed = None
-            instance.save(update_fields=['date_fixed'])
+            instance.assigned_to = None
+            instance.save(update_fields=['date_fixed', 'assigned_to'])
             response.data = self.get_serializer(instance).data
 
 
@@ -183,6 +200,34 @@ class DefectViewSet(viewsets.ModelViewSet):
         status_choices = dict(Defect.STATUS_CHOICES)
         allowed_with_labels = [{'value': s, 'label': status_choices.get(s, s)} for s in allowed]
         return Response({'allowed_statuses': allowed_with_labels})
+    
+    
+    @action(detail=False, methods=['get'], url_path='metrics/(?P<user_id>[^/.]+)')
+    def developer_metrics(self, request, user_id=None):
+        from django.contrib.auth.models import User
+        try:
+            developer = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'Developer not found'}, status=404)
+
+        if not developer.groups.filter(name='Developer').exists():
+            return Response({'error': 'User is not a developer'}, status=400)
+        fixed = DefectHistory.objects.filter(assigned_to=developer, new_status='fixed').count()
+        reopened = DefectHistory.objects.filter(assigned_to=developer, new_status='reopened').count()
+
+        if fixed < 20:
+            rating = "Insufficient data"
+        else:
+            ratio = reopened / fixed
+            if ratio < 1/32:
+                rating = "Good"
+            elif ratio < 1/8:
+                rating = "Fair"
+            else:
+                rating = "Poor"
+
+        return Response({'developer_id': developer.id, 'rating': rating})
+    
 
 
         
@@ -206,13 +251,6 @@ class DefectViewSet(viewsets.ModelViewSet):
             return 'developer'
         return None
     
-    def perform_create(self, serializer):
-        serializer.save(
-            tester_id=str(self.request.user.id),  
-            status='new',
-            severity="low",  
-            priority="low"
-        )
 
     def create(self, request, *args, **kwargs):
         if not request.user.groups.filter(name='Tester').exists():
