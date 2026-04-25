@@ -22,11 +22,12 @@ BetaTrax is a defect tracking system developed using **Django 6.0.2** and **Djan
 ## How to Run
 1. Activate virtual environment: run `python -m venv venv` and then run `.\venv\Scripts\activate` and then run `pip install Django==6.0.2 djangorestframework django-filter`
 2. Run the server: `python manage.py runserver`
-3. Admin panel: http://127.0.0.1:8000/admin/  
-4. API endpoint: http://127.0.0.1:8000/api/defects/ -->this one for developers and owners to review the reports
+3. Root URL: http://127.0.0.1:8000/ now redirects to the API landing page at http://127.0.0.1:8000/api/  
+4. Admin panel: http://127.0.0.1:8000/admin/  
+5. API endpoint: http://127.0.0.1:8000/api/defects/ -->this one for developers and owners to review the reports
                  http://127.0.0.1:8000/api/products/ -->this one for owners to add new products
-5. View defect reports: Open http://127.0.0.1:8000/api/defects/<id>/ (e.g., http://127.0.0.1:8000/api/defects/1/) in your browser after logging in.
-6. View products: Open http://127.0.0.1:8000/api/products/<id>/ (e.g., http://127.0.0.1:8000/api/products/1/) in your browser after logging in.
+6. View defect reports: Open http://127.0.0.1:8000/api/defects/<id>/ (e.g., http://127.0.0.1:8000/api/defects/1/) in your browser after logging in.
+7. View products: Open http://127.0.0.1:8000/api/products/<id>/ (e.g., http://127.0.0.1:8000/api/products/1/) in your browser after logging in.
 ## Limitations (Sprint 2)
 - The function of sending emails has not been debugged yet. It's impossible to really send emails in real life
 - Comment system does not support editing or deleting comments

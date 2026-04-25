@@ -4,6 +4,7 @@ from django.contrib.auth.models import User, Group
 from rest_framework.test import APIClient
 from rest_framework import status
 from datetime import datetime, timedelta
+from unittest.mock import patch
 from defects.models import Defect, Product, Comment, DefectHistory
 
 
@@ -176,6 +177,163 @@ class DefectAPITests(BaseAPITestCase):
         self.assertIn('developer_id', response.data)
         self.assertIn('rating', response.data)
         self.assertEqual(response.data['developer_id'], self.developer_user.id)
+
+    @patch('defects.models.send_mail')
+    def test_duplicate_does_not_merge_emails_and_sets_parent_link(self, mock_send_mail):
+        second_tester = User.objects.create_user(
+            username='tester2',
+            email='tester2@example.com',
+            password='testpass123'
+        )
+        second_tester.groups.add(self.tester_group)
+
+        target_defect = Defect.objects.create(
+            product=self.product,
+            title='Target Defect',
+            description='Target defect',
+            steps_to_reproduce='Step 1',
+            tester_id=str(second_tester.id),
+            tester_email=second_tester.email,
+            status='new'
+        )
+
+        self.client.force_authenticate(user=self.owner_user)
+
+        response = self.client.patch(
+            f'/api/defects/{self.defect.id}/',
+            {'status': 'duplicate', 'target_defect_id': target_defect.id},
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.defect.refresh_from_db()
+        target_defect.refresh_from_db()
+
+        self.assertEqual(self.defect.status, 'duplicate')
+        self.assertEqual(self.defect.duplicate_of_id, target_defect.id)
+        self.assertEqual(target_defect.tester_email, second_tester.email)
+        self.assertEqual(self.defect.tester_email, self.tester_user.email)
+
+        mock_send_mail.assert_called_once()
+        recipient_list = mock_send_mail.call_args.kwargs['recipient_list']
+        self.assertCountEqual(recipient_list, [self.tester_user.email, second_tester.email])
+
+    @patch('defects.models.send_mail')
+    def test_status_change_notifies_entire_duplicate_chain_from_parent(self, mock_send_mail):
+        child_tester = User.objects.create_user(
+            username='tester2',
+            email='tester2@example.com',
+            password='testpass123'
+        )
+        child_tester.groups.add(self.tester_group)
+
+        grandchild_tester = User.objects.create_user(
+            username='tester3',
+            email='tester3@example.com',
+            password='testpass123'
+        )
+        grandchild_tester.groups.add(self.tester_group)
+
+        root_defect = Defect.objects.create(
+            product=self.product,
+            title='Root Defect',
+            description='Root',
+            steps_to_reproduce='Step 1',
+            tester_id=str(self.tester_user.id),
+            tester_email=self.tester_user.email,
+            status='new'
+        )
+
+        child_defect = Defect.objects.create(
+            product=self.product,
+            title='Child Defect',
+            description='Child',
+            steps_to_reproduce='Step 1',
+            tester_id=str(child_tester.id),
+            tester_email=child_tester.email,
+            status='new',
+            duplicate_of=root_defect
+        )
+
+        Defect.objects.create(
+            product=self.product,
+            title='Grandchild Defect',
+            description='Grandchild',
+            steps_to_reproduce='Step 1',
+            tester_id=str(grandchild_tester.id),
+            tester_email=grandchild_tester.email,
+            status='new',
+            duplicate_of=child_defect
+        )
+
+        root_defect.status = 'open'
+        root_defect.save()
+
+        mock_send_mail.assert_called_once()
+        recipient_list = mock_send_mail.call_args.kwargs['recipient_list']
+        self.assertCountEqual(
+            recipient_list,
+            [self.tester_user.email, child_tester.email, grandchild_tester.email]
+        )
+
+    @patch('defects.models.send_mail')
+    def test_status_change_notifies_entire_duplicate_chain_from_child(self, mock_send_mail):
+        child_tester = User.objects.create_user(
+            username='tester2',
+            email='tester2@example.com',
+            password='testpass123'
+        )
+        child_tester.groups.add(self.tester_group)
+
+        grandchild_tester = User.objects.create_user(
+            username='tester3',
+            email='tester3@example.com',
+            password='testpass123'
+        )
+        grandchild_tester.groups.add(self.tester_group)
+
+        root_defect = Defect.objects.create(
+            product=self.product,
+            title='Root Defect',
+            description='Root',
+            steps_to_reproduce='Step 1',
+            tester_id=str(self.tester_user.id),
+            tester_email=self.tester_user.email,
+            status='new'
+        )
+
+        child_defect = Defect.objects.create(
+            product=self.product,
+            title='Child Defect',
+            description='Child',
+            steps_to_reproduce='Step 1',
+            tester_id=str(child_tester.id),
+            tester_email=child_tester.email,
+            status='new',
+            duplicate_of=root_defect
+        )
+
+        Defect.objects.create(
+            product=self.product,
+            title='Grandchild Defect',
+            description='Grandchild',
+            steps_to_reproduce='Step 1',
+            tester_id=str(grandchild_tester.id),
+            tester_email=grandchild_tester.email,
+            status='new',
+            duplicate_of=child_defect
+        )
+
+        child_defect.status = 'open'
+        child_defect.save()
+
+        mock_send_mail.assert_called_once()
+        recipient_list = mock_send_mail.call_args.kwargs['recipient_list']
+        self.assertCountEqual(
+            recipient_list,
+            [self.tester_user.email, child_tester.email, grandchild_tester.email]
+        )
 
 
 class ProductAPITests(BaseAPITestCase):

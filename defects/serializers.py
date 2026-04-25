@@ -63,6 +63,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class DefectSerializer(serializers.ModelSerializer):
     assigned_to = serializers.StringRelatedField(read_only=True)
+    duplicate_of = serializers.PrimaryKeyRelatedField(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)          
     new_comment = serializers.CharField(write_only=True, required=False, allow_blank=True) 
     target_defect_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
@@ -72,7 +73,7 @@ class DefectSerializer(serializers.ModelSerializer):
         model = Defect
         fields = [
             'id', 'product', 'title', 'description', 'steps_to_reproduce',
-            'tester_id', 'tester_email', 'severity', 'priority', 'status','target_defect_id',
+            'tester_id', 'tester_email', 'duplicate_of', 'severity', 'priority', 'status','target_defect_id',
             'assigned_to', 'date_reported', 'date_fixed', 'comments', 'new_comment'
         ]
         read_only_fields = ['id', 'date_reported', 'date_fixed', 'tester_id']
@@ -95,9 +96,11 @@ class DefectSerializer(serializers.ModelSerializer):
         # ==================== Tester  ====================
         if user.groups.filter(name='Tester').exists():
             if method == 'POST':
-                fields_to_hide = ['status', 'severity', 'priority', 'date_fixed', 'assigned_to']
+                fields_to_hide = ['severity', 'priority', 'date_fixed', 'assigned_to']
                 for field in fields_to_hide:
                     fields.pop(field, None)
+                if 'status' in fields:
+                    fields['status'].read_only = True
 
         # ==================== Developer and Product Owner  ====================
         else:

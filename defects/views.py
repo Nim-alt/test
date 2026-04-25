@@ -6,7 +6,7 @@ from .permissions import IsProductOwnerOrDeveloperForDefect
 from .serializers import DefectSerializer, ProductSerializer,CommentSerializer
 from rest_framework.decorators import action
 from rest_framework.decorators import action
-from .state_machine import is_transition_allowed, ROLE_OWNER, ROLE_DEVELOPER  
+from .state_machine import is_transition_allowed, ROLE_OWNER, ROLE_DEVELOPER, get_allowed_transitions  
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
@@ -24,15 +24,15 @@ class DefectViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         if user.groups.filter(name='Product Owner').exists():
-            return Defect.objects.filter(product__owner=user)
+            return Defect.objects.filter(product__owner=user).order_by('id')
         
         elif user.groups.filter(name='Developer').exists():
-            return Defect.objects.filter(product__developers=user)
+            return Defect.objects.filter(product__developers=user).order_by('id')
         
         else:
             return Defect.objects.filter(
                 Q(tester_email=user.email) | Q(tester_id=str(user.id))
-            )
+            ).order_by('id')
 
 
     def update(self, request, *args, **kwargs):
@@ -72,15 +72,25 @@ class DefectViewSet(viewsets.ModelViewSet):
                     {'error': 'Target defect must belong to the same product.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            source_emails = set(e.strip() for e in instance.tester_email.split(',') if e.strip())
-            target_emails = set(e.strip() for e in target_defect.tester_email.split(',') if e.strip())
-            merged_emails = target_emails.union(source_emails)
-            target_defect.tester_email = ', '.join(merged_emails)
-            target_defect.save()
+
+            if target_defect.pk == instance.pk:
+                return Response(
+                    {'error': 'A defect cannot be marked as a duplicate of itself.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            current = target_defect
+            while current is not None:
+                if current.pk == instance.pk:
+                    return Response(
+                        {'error': 'Cannot mark a defect as a duplicate of one of its descendants.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                current = current.duplicate_of
 
             instance.duplicate_of = target_defect
             instance.status = 'duplicate'
-            instance.save()
+            instance.save(update_fields=['duplicate_of', 'status'])
 
             DefectHistory.objects.create(
                 defect=instance,
@@ -125,6 +135,7 @@ class DefectViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_403_FORBIDDEN
                 )
 
+        kwargs['partial'] = partial
         response = super().update(request, *args, **kwargs)
         instance.refresh_from_db()
 
@@ -181,7 +192,7 @@ class DefectViewSet(viewsets.ModelViewSet):
     def candidate_targets(self, request, pk=None):
         defect = self.get_object()
         candidates = Defect.objects.filter(product=defect.product).exclude(status='new').values('id', 'title')
-        return Response(candidates)
+        return Response(list(candidates))
 
 
     @action(detail=True, methods=['get'], url_path='allowed-statuses')
@@ -232,15 +243,10 @@ class DefectViewSet(viewsets.ModelViewSet):
 
         
     def perform_create(self, serializer):
-        product = serializer.validated_data.get('product')
-        version = product.version if product else ''
         serializer.save(
             tester_id=str(self.request.user.id),
             tester_email=self.request.user.email,
             status='new',
-            severity=None,
-            priority=None,
-            version=version
         )
 
     @staticmethod
@@ -272,7 +278,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.groups.filter(name='Product Owner').exists():
-            return Product.objects.filter(owner=user)
+            return Product.objects.filter(owner=user).order_by('id')
         return Product.objects.none()
 
     def perform_create(self, serializer):
