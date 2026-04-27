@@ -1,4 +1,4 @@
-# # COMP-3297-2026-group-D BetaTrax Sprint 2
+# # COMP-3297-2026-group-D BetaTrax Sprint 3
 
 ## Project Overview
 BetaTrax is a defect tracking system developed using **Django 6.0.2** and **Django Rest Framework (DRF)**.
