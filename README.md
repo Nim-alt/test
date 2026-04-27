@@ -20,7 +20,7 @@ BetaTrax is a defect tracking system developed using **Django 6.0.2** and **Djan
   -Product Owners can register products but cannot submit defect reports.
 
 ## How to Run
-1. Activate virtual environment: run `python -m venv venv` and then run `.\venv\Scripts\activate` and then run `pip install Django==6.0.2 djangorestframework django-filter`
+1. Activate virtual environment: run `python -m venv venv` (or `python3 -m venv venv` for MacOS and Linux) and then run `.\venv\Scripts\activate` (or `. venv/bin/activate` for MacOS and Linux) and then run `pip install Django==6.0.2 djangorestframework django-filter`
 2. Run the server: `python manage.py runserver`
 3. Root URL: http://127.0.0.1:8000/ now redirects to the API landing page at http://127.0.0.1:8000/api/  
 4. Admin panel: http://127.0.0.1:8000/admin/  
