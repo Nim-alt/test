@@ -51,7 +51,7 @@ For submission-ready API documentation, see [docs/API_DOCUMENTATION.md](docs/API
 2) run `coverage report --include="views.py"` to generate report
 3) run `coverage report -m --include="view.py"` to see how many line the testing misses
 4) run `coverage html --include="views.py"` to generate the report in html
-5) run "open htmlcov/index.html" / "xdg-open htmlcov/index.html" / "start htmlcov/index.html" to view report in MacOS / Linux / Windows
+5) run `open htmlcov/index.html` / `xdg-open htmlcov/index.html` / `start htmlcov/index.html` to view report in `MacOS` / `Linux` / `Windows`
 
 
 ## Limitations (Sprint 3)
