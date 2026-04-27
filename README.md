@@ -1,4 +1,4 @@
-# # COMP-3297-2026-group-D BetaTrax Sprint 2
+# # COMP-3297-2026-group-D BetaTrax Sprint 3
 
 ## Project Overview
 BetaTrax is a defect tracking system developed using **Django 6.0.2** and **Django Rest Framework (DRF)**.
@@ -6,23 +6,24 @@ BetaTrax is a defect tracking system developed using **Django 6.0.2** and **Djan
 For submission-ready API documentation, see [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md).
 
 
-## Sprint 2 Enhancements over Sprint 1
-- ✅ Product Owner can assign multiple developers when registering a product – Only developers who are not already assigned to another product are available for selection. A developer cannot be responsible for more than one product at a time.
-- ✅ Restricted status transitions for Product Owner and Developer – State changes follow strict business rules:
-  -Product Owner can only change: new → open, rejected, duplicate; fixed → reopened, resolved.
-  -Developer can only change: open / reopened → assigned; assigned → fixed, cannot_reproduce.
-- ✅ Duplicate defect handling with email merging – When a Product Owner marks a defect as duplicate, they must provide a target_defect_id. The current defect’s tester email(s) are merged into the target defect’s tester email list. As a result, when the target defect’s status changes, all testers (including those from the duplicate) receive notifications.
-- ✅ Full comment system for Product Owners and Developers – Both roles can add comments to any defect they have access to. Each comment includes author, timestamp, and text, and is automatically assigned a unique comment ID.
-- ✅ Automatic email notifications on every status change – Whenever a defect’s status changes, an email is sent to all email addresses listed in the defect’s tester_email field (supports multiple comma‑separated emails).
-- ✅ Auto‑generated User ID for each new user – When an administrator creates a user account, a unique user ID is automatically generated and stored (in addition to the default id field).
-- ✅ Filtering functionality – Product Owners and Developers can filter defect reports related to their own products using custom filters (e.g., by status, severity, priority, or date).
-- ✅ Role‑based restrictions on actions:
-  -Testers can submit defect reports but cannot register products.
-  -Developers can modify defects but cannot register products.
-  -Product Owners can register products but cannot submit defect reports.
+## Sprint 3 Enhancements over Sprint 1 & 2
+- **Multi-tenant support** – Added tenant isolation to enable BetaTrax to be rolled out as a SaaS product for other development companies, as described in the Project Description.
+
+- **Developer effectiveness metric** – Implemented a simple metric to calculate and report the effectiveness of individual developers in fixing defects.
+
+- **Basic automated tests** – Added a suite of basic automated tests for the Django web service, covering models, forms, and key API endpoints.
+
+- **Tests + coverage for developer effectiveness classification** – Wrote dedicated tests for the code that classifies developer effectiveness, and used a coverage tool to demonstrate that those tests meet specified adequacy criteria .
+
+- **User ID visibility & API usage** – Each user's User ID is now visible in the admin system. When requesting the effectiveness metric for a particular developer, the API expects the developer's User ID to be provided as a parameter.
+
+- **Fixed email notification issue** – Resolved the problem from Sprint 2 where notification emails were not actually being sent.
+
+- **Fixed duplicate notification issue** – Resolved the problem where tester_email merging was incorrectly treated the same as cascade notifications; they are now handled separately.
+
 
 ## How to Run
-1. Activate virtual environment: run `python -m venv venv` (or `python3 -m venv venv` for MacOS and Linux) and then run `.\venv\Scripts\activate` (or `. venv/bin/activate` for MacOS and Linux) and then run `pip install Django==6.0.2 djangorestframework django-filter`
+1. Activate virtual environment: run `python -m venv venv` (or `python3 -m venv venv` for MacOS and Linux) and then run `.\venv\Scripts\activate` (or `. venv/bin/activate` for MacOS and Linux) and then run `pip install Django==6.0.2 djangorestframework django-filter`. Lastly, run `pip install -r requirements.txt` to ensure all required files are installed.
 2. Run the server: `python manage.py runserver`
 3. Root URL: http://127.0.0.1:8000/ now redirects to the API landing page at http://127.0.0.1:8000/api/  
 4. Admin panel: http://127.0.0.1:8000/admin/  
@@ -30,10 +31,10 @@ For submission-ready API documentation, see [docs/API_DOCUMENTATION.md](docs/API
                  http://127.0.0.1:8000/api/products/ -->this one for owners to add new products
 6. View defect reports: Open http://127.0.0.1:8000/api/defects/<id>/ (e.g., http://127.0.0.1:8000/api/defects/1/) in your browser after logging in.
 7. View products: Open http://127.0.0.1:8000/api/products/<id>/ (e.g., http://127.0.0.1:8000/api/products/1/) in your browser after logging in.
-## Limitations (Sprint 2)
-- The function of sending emails has not been debugged yet. It's impossible to really send emails in real life
-- Comment system does not support editing or deleting comments
--The field named product_id in the source code actually represents the product name in practice. Separately, when a product is registered, a unique system-generated ID is automatically created. This system ID is used to open the corresponding product interface.
+8. View developer metrics: Open http://127.0.0.1:8000/api/defects/metrics/<user_id>/ (e.g., http://127.0.0.1:8000/api/defects/metrics/12/) in your browser after logging in (The user_id here must be a the id of a developer).
+
+## Limitations (Sprint 3)
+
 
 
 
