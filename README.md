@@ -39,11 +39,11 @@ For submission-ready API documentation, see [docs/API_DOCUMENTATION.md](docs/API
 2) Coverage installed (run `pip install coverage` to install coverage)
 
 **Run Instructions(API Test):**
-1) Do [How to Run](#How-to-Run) Step 1 & 2
+1) Do [How to Run](#How-to-Run) Step 1
 2) Run `python manage.py test defects.test_api`
 
 **Run Instructions(Developer Metrics Classification Logic Test):**
-1) Do [How to Run](#How-to-Run) Step 1 & 2
+1) Do [How to Run](#How-to-Run) Step 1
 1) Run "python manage.py test defects.test_dev_metrics" for normal testing
 
 **Generate Coverage Report (Developer Metrics Classification Logic Test):**
