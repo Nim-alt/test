@@ -25,13 +25,14 @@ For submission-ready API documentation, see [docs/API_DOCUMENTATION.md](docs/API
 ## How to Run
 1. Activate virtual environment: run `python -m venv venv` (or `python3 -m venv venv` for MacOS and Linux) and then run `.\venv\Scripts\activate` (or `. venv/bin/activate` for MacOS and Linux) and then run `pip install Django==6.0.2 djangorestframework django-filter`. Lastly, run `pip install -r requirements.txt` to ensure all required files are installed.
 2. Run the server: `python manage.py runserver`
-3. Root URL: http://127.0.0.1:8000/ now redirects to the API landing page at http://127.0.0.1:8000/api/  
-4. Admin panel: http://127.0.0.1:8000/admin/  
-5. API endpoint: http://127.0.0.1:8000/api/defects/ -->this one for developers and owners to review the reports
+3. Create new superuser(admin): `python manage.py createsuperuser`, and provide username and password for the admin of the app.
+4. Root URL: http://127.0.0.1:8000/ now redirects to the API landing page at http://127.0.0.1:8000/api/  
+5. Admin panel: http://127.0.0.1:8000/admin/  
+6. API endpoint: http://127.0.0.1:8000/api/defects/ -->this one for developers and owners to review the reports
                  http://127.0.0.1:8000/api/products/ -->this one for owners to add new products
-6. View defect reports: Open http://127.0.0.1:8000/api/defects/<id>/ (e.g., http://127.0.0.1:8000/api/defects/1/) in your browser after logging in.
-7. View products: Open http://127.0.0.1:8000/api/products/<id>/ (e.g., http://127.0.0.1:8000/api/products/1/) in your browser after logging in.
-8. View developer metrics: Open http://127.0.0.1:8000/api/defects/metrics/<user_id>/ (e.g., http://127.0.0.1:8000/api/defects/metrics/12/) in your browser after logging in (The user_id here must be a the id of a developer).
+7. View defect reports: Open http://127.0.0.1:8000/api/defects/<id>/ (e.g., http://127.0.0.1:8000/api/defects/1/) in your browser after logging in.
+8. View products: Open http://127.0.0.1:8000/api/products/<id>/ (e.g., http://127.0.0.1:8000/api/products/1/) in your browser after logging in.
+9. View developer metrics: Open http://127.0.0.1:8000/api/defects/metrics/<user_id>/ (e.g., http://127.0.0.1:8000/api/defects/metrics/12/) in your browser after logging in (The user_id here must be a the id of a developer).
 
 ## Automation Test Instructions (Sprint 3)
 **Preconditions:**
