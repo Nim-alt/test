@@ -33,6 +33,28 @@ For submission-ready API documentation, see [docs/API_DOCUMENTATION.md](docs/API
 7. View products: Open http://127.0.0.1:8000/api/products/<id>/ (e.g., http://127.0.0.1:8000/api/products/1/) in your browser after logging in.
 8. View developer metrics: Open http://127.0.0.1:8000/api/defects/metrics/<user_id>/ (e.g., http://127.0.0.1:8000/api/defects/metrics/12/) in your browser after logging in (The user_id here must be a the id of a developer).
 
+## Automation Test Instructions (Sprint 3)
+**Preconditions:**
+1) python/python3 intsalled
+2) have coverage installed (run `pip install coverage` to install coverage)
+
+**Run Instructions(API Test):**
+1) Do [How to Run](#How-to-Run) Step 1 & 2
+2) Run `python manage.py test defects.test_api`
+
+**Run Instructions(Developer Metrics Classification Logic Test):**
+1) Do [How to Run](#How-to-Run) Step 1 & 2
+1) Run "python manage.py test defects.test_dev_metrics" for normal testing
+
+**Generate Coverage Report (Developer Metrics Classification Logic Test):**
+1) run `coverage run --source='defects' manage.py test defects.test_dev_metrics`
+2) run `coverage report --include="views.py"` to generate report
+3) run `coverage report -m --include="view.py"` to see how many line the testing misses
+4) run `coverage html --include="views.py"` to generate the report in html
+5) run "open htmlcov/index.html" / "xdg-open htmlcov/index.html" / "start htmlcov/index.html" to view report in MacOS / Linux / Windows
+'''
+
+
 ## Limitations (Sprint 3)
 
 
