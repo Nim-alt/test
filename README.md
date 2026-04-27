@@ -3,6 +3,8 @@
 ## Project Overview
 BetaTrax is a defect tracking system developed using **Django 6.0.2** and **Django Rest Framework (DRF)**.
 
+For submission-ready API documentation, see [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md).
+
 
 ## Sprint 2 Enhancements over Sprint 1
 - ✅ Product Owner can assign multiple developers when registering a product – Only developers who are not already assigned to another product are available for selection. A developer cannot be responsible for more than one product at a time.
